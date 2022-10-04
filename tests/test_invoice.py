@@ -72,3 +72,11 @@ class TestInvoice:
         assert invoice.codigo_municipio == 3304557
         assert isinstance(invoice.service_provider, ServiceProvider)
         assert isinstance(invoice.service_receiver, ServiceReceiver)
+
+    def test_nfse_link(self):
+        root = etree.fromstring(self.xml_invoice).find(".//{http://www.abrasf.org.br/ABRASF/arquivos/nfse.xsd}Nfse")
+
+        invoice = NFSe._load(root)
+        expected = "https://notacarioca.rio.gov.br/contribuinte/notaprint.aspx?inscricao=12345678&nf=59&verificacao=AAAABBBB"
+
+        assert invoice.link == expected

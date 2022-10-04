@@ -171,3 +171,10 @@ class NFSe(Invoice):
             invoices.append(cls._load(nfse))
 
         return invoices
+
+    @property
+    def link(self):
+        base = "https://notacarioca.rio.gov.br/contribuinte/notaprint.aspx?inscricao={}&nf={}&verificacao={}"
+        verificacao = self.codigo_verificacao.replace("-", "")
+        inscricao_municipal = self.service_provider.inscricao_municipal
+        return base.format(inscricao_municipal, self.numero, verificacao)
