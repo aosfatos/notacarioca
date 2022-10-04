@@ -139,7 +139,7 @@ class NFSe(Invoice):
         service_provider = ServiceProvider._load(nfse.find(f".//{cls.xml_ns}PrestadorServico"))
         service_receiver = ServiceReceiver._load(nfse.find(f".//{cls.xml_ns}TomadorServico"))
         return cls(
-            numero = cls._get(nfse, "Numero"),
+            numero=cls._get(nfse, "Numero"),
             codigo_verificacao=cls._get(nfse, "CodigoVerificacao"),
             data_emissao=cls._get(nfse, "DataEmissao"),
             serie=cls._get(nfse, "Serie"),
@@ -171,6 +171,19 @@ class NFSe(Invoice):
             invoices.append(cls._load(nfse))
 
         return invoices
+
+    @classmethod
+    def xml_consultar(cls, cnpj: str, inscricao_municipal: str, data_inicial: date, data_final: date):
+        from jinja2 import Template
+        from templates import consultar
+        template = Template(consultar)
+        context = {
+            "cnpj": cnpj,
+            "inscricao_municipal": inscricao_municipal,
+            "data_inicial": data_inicial,
+            "data_final": data_final
+        }
+        return template.render(context)
 
     @property
     def link(self):
