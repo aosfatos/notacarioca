@@ -4,7 +4,36 @@ from pathlib import Path
 
 from lxml import etree
 
-from invoice import NFSe
+from invoice import NFSe, ServiceProvider, ServiceReceiver
+
+
+class TestServiceProvider:
+    def setup_method(self):
+        invoice_path = Path(__file__).parent / "invoices.xml"
+        self.xml_invoice = open(invoice_path, "r").read()
+
+    def test_load_provider_from_xml_obj(self):
+        root = etree.fromstring(self.xml_invoice).find(
+            ".//{http://www.abrasf.org.br/ABRASF/arquivos/nfse.xsd}PrestadorServico"
+        )
+        provider = ServiceProvider._load(root)
+
+        assert isinstance(provider, ServiceProvider)
+
+
+class TestServiceReceiver:
+    def setup_method(self):
+        invoice_path = Path(__file__).parent / "invoices.xml"
+        self.xml_invoice = open(invoice_path, "r").read()
+
+    def test_load_receiver_from_xml_obj(self):
+        root = etree.fromstring(self.xml_invoice).find(
+            ".//{http://www.abrasf.org.br/ABRASF/arquivos/nfse.xsd}TomadorServico"
+        )
+        provider = ServiceReceiver._load(root)
+
+        assert isinstance(provider, ServiceReceiver)
+
 
 
 class TestInvoice:
@@ -41,3 +70,5 @@ class TestInvoice:
         assert invoice.codigo_tributacao_municipio == "010401"
         assert invoice.discriminacao == "Descrição Serviço"
         assert invoice.codigo_municipio == 3304557
+        assert isinstance(invoice.service_provider, ServiceProvider)
+        assert isinstance(invoice.service_receiver, ServiceReceiver)

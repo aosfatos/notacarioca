@@ -5,10 +5,98 @@ from decimal import Decimal
 from lxml import etree
 
 
-@dataclass
-class NFSe:
+class Invoice:
     xml_ns = "{http://www.abrasf.org.br/ABRASF/arquivos/nfse.xsd}"
 
+    @classmethod
+    def _get(cls, ele, field):
+        return getattr(ele.find(f".//{cls.xml_ns}{field}"), "text", None)
+
+    @classmethod
+    def _get_all(cls, ele, field, pos=0):
+        value = None
+        if attributes := ele.findall(f".//{cls.xml_ns}{field}"):
+            value = attributes[pos].text
+
+        return value
+
+    @classmethod
+    def load(cls):
+        raise NotImplementedError
+
+
+@dataclass
+class ServiceReceiver(Invoice):
+    cnpj: str
+    inscricao_municipal: str
+    razao_social: str
+    endereco: str
+    numero: str
+    complemento: str
+    bairro: str
+    codigo_municipio: int
+    uf: str
+    cep: str
+    telefone: str
+    email: str
+
+
+    @classmethod
+    def _load(cls, xml_obj):
+        return cls(
+            cnpj=cls._get(xml_obj, "Cnpj"),
+            inscricao_municipal=cls._get(xml_obj, "InscricaoMunicipal"),
+            razao_social=cls._get(xml_obj, "RazaoSocial"),
+            endereco=cls._get_all(xml_obj, "Endereco", pos=1),
+            numero=cls._get(xml_obj, "Numero"),
+            complemento=cls._get(xml_obj, "Complemento"),
+            bairro=cls._get(xml_obj, "Bairro"),
+            codigo_municipio=cls._get(xml_obj, "CodigoMunicipio"),
+            uf=cls._get(xml_obj, "Uf"),
+            cep=cls._get(xml_obj, "Cep"),
+            telefone=cls._get(xml_obj, "Telefone"),
+            email=cls._get(xml_obj, "Email"),
+        )
+
+
+@dataclass
+class ServiceProvider(Invoice):
+    cnpj: str
+    inscricao_municipal: str
+    razao_social: str
+    nome_fantasia: str
+    endereco: str
+    numero: str
+    complemento: str
+    bairro: str
+    codigo_municipio: int
+    uf: str
+    cep: str
+    telefone: str
+    email: str
+
+
+    @classmethod
+    def _load(cls, xml_obj):
+        return cls(
+            cnpj=cls._get(xml_obj, "Cnpj"),
+            inscricao_municipal=cls._get(xml_obj, "InscricaoMunicipal"),
+            razao_social=cls._get(xml_obj, "RazaoSocial"),
+            nome_fantasia=cls._get(xml_obj, "NomeFantasia"),
+            endereco=cls._get_all(xml_obj, "Endereco", pos=1),
+            numero=cls._get(xml_obj, "Numero"),
+            complemento=cls._get(xml_obj, "Complemento"),
+            bairro=cls._get(xml_obj, "Bairro"),
+            codigo_municipio=cls._get(xml_obj, "CodigoMunicipio"),
+            uf=cls._get(xml_obj, "Uf"),
+            cep=cls._get(xml_obj, "Cep"),
+            telefone=cls._get(xml_obj, "Telefone"),
+            email=cls._get(xml_obj, "Email"),
+        )
+
+
+@dataclass
+class NFSe(Invoice):
     numero: int
     codigo_verificacao: str
     data_emissao: datetime
@@ -27,6 +115,8 @@ class NFSe:
     codigo_tributacao_municipio: str
     discriminacao: str
     codigo_municipio: int
+    service_provider: ServiceProvider
+    service_receiver: ServiceReceiver
 
     def __post_init__(self):
         self.numero = int(self.numero)
@@ -45,12 +135,10 @@ class NFSe:
         self.codigo_municipio = int(self.codigo_municipio)
 
     @classmethod
-    def _get(cls, ele, field):
-        return getattr(ele.find(f".//{cls.xml_ns}{field}"), "text", None)
-
-    @classmethod
     def _load(cls, nfse):
-        return NFSe(
+        service_provider = ServiceProvider._load(nfse.find(f".//{cls.xml_ns}PrestadorServico"))
+        service_receiver = ServiceReceiver._load(nfse.find(f".//{cls.xml_ns}TomadorServico"))
+        return cls(
             numero = cls._get(nfse, "Numero"),
             codigo_verificacao=cls._get(nfse, "CodigoVerificacao"),
             data_emissao=cls._get(nfse, "DataEmissao"),
@@ -69,6 +157,8 @@ class NFSe:
             codigo_tributacao_municipio=cls._get(nfse, "CodigoTributacaoMunicipio"),
             discriminacao=cls._get(nfse, "Discriminacao"),
             codigo_municipio=cls._get(nfse, "CodigoMunicipio"),
+            service_provider=service_provider,
+            service_receiver=service_receiver,
         )
 
     @classmethod
